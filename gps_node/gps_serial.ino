@@ -38,19 +38,19 @@ void loop() {
 void displayInfo() {
   if (gps.location.isValid()) {
 
-    rospy.info("Latitude: ")
+    rospy.logininfo("Latitude: ")
     gps_msg.latitude = gps.location.lat();
-    rospy.info(gps.location.lat(), 6);
+    rospy.logininfo(gps.location.lat(), 6);
 
-    rospy.info("Longitude: ");
+    rospy.logininfo("Longitude: ");
     gps_msg.longitude = gps.location.lng();
-    rospy.info(gps.location.lng(), 6);
+    rospy.logininfo(gps.location.lng(), 6);
     
     gps_pub.publish(&gps_msg);
     nh.spinOnce();
 
   } else {
-    rospy.info("Sem localização");
+    rospy.logininfo("Sem localização");
   }
   
 }
