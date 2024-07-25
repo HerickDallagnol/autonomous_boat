@@ -29,14 +29,14 @@ nav_waypoints = [
 waypoint_index = 0
 num_waypoints = len(nav_waypoints)
 
-# Globals for compass readings and GPS readings
+# compass and gps
 compass_angle = 0.0
 waypoint_angle = 0.0
 last_calc_dist = 0.0
 gps_lat = 0.0
 gps_lon = 0.0
 
-# Globals for the moving average filter
+#moving average filter
 NUM_FILTERING_POINTS = 8
 buffer_gps_lat = [0.0] * NUM_FILTERING_POINTS
 buffer_gps_lon = [0.0] * NUM_FILTERING_POINTS
@@ -45,16 +45,14 @@ buffer_fill_index = 0
 def store_gps_reading(lat, lon):
     global buffer_gps_lat, buffer_gps_lon, buffer_fill_index
 
-    # Shift all buffer values towards the tail
     for i in range(NUM_FILTERING_POINTS - 1, 0, -1):
         buffer_gps_lat[i] = buffer_gps_lat[i - 1]
         buffer_gps_lon[i] = buffer_gps_lon[i - 1]
 
-    # Insert new values at the head
+    #ponteiro
     buffer_gps_lat[0] = lat
     buffer_gps_lon[0] = lon
-
-    # Increment the number of readings stored in buffers
+    
     if buffer_fill_index < NUM_FILTERING_POINTS:
         buffer_fill_index += 1
 
@@ -71,7 +69,7 @@ def compute_filtered_gps():
     }
     return filtered_waypoint
 
-# ROS gps function
+# ROS gps
 def gps_latitude_callback(data):
     global gps_lat
     gps_lat = data.data
@@ -82,7 +80,7 @@ def gps_longitude_callback(data):
     gps_lon = data.data
     store_gps_reading(gps_lat, gps_lon)
 
-# ROS compass function
+# ROS compass
 def compass_callback(data):
     global compass_angle
     compass_angle = data.data  
@@ -131,7 +129,6 @@ def compute_navigation_vector(gps_lat, gps_lon):
     if waypoint_angle < 0:
         waypoint_angle += 360
 
-# Function to control navigation
 def control_navigation():
     global heading_error
 
