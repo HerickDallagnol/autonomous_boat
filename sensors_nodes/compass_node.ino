@@ -4,7 +4,7 @@
 #include <std_msgs/Float32.h>
 #include <math.h>
 
-MechaQMC5883 bussola; // Criação do objeto para o sensor 
+MechaQMC5883 bussola;
 
 int x = 0, y = 0, z = 0;
 float angulo = 0;
@@ -21,14 +21,14 @@ void setup() {
   Wire.begin(); 
   Serial.begin(9600); 
   
-  bussola.init(); // Inicializando o Sensor QMC5883
+  bussola.init(); 
   
   nh.advertise(compass_pub);
 }
  
 void loop() { 
   bussola.read(&x, &y, &z); 
-  angulo = atan2(x, y) / (180.0/M_PI); // Converte radianos para graus
+  angulo = atan2(x, y) / (180.0/M_PI); 
   angulo = angulo - mag_declination;
 
   if(angulo < 0){
