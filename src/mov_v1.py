@@ -4,39 +4,30 @@ import math
 from std_msgs.msg import Float32, Int32
 
 TOLERANCE_RADIUS = 7.0  # Tolerance radius for reaching the goal
-FORWARD_VEL = 200    # Robot car forward velocity
-SLOW_TURN_VEL = 200  # Slow turn velocity
-PIVOT_WHEEL_VEL = 50  # Pivot wheel velocity
-FAST_TURN_VEL = 150 
 MAX_HEADING_ANGLE = 180
 MIN_HEADING_ANGLE = 10
 ANGLE_RANGE_DIV = 0.25
 K_RIGHT_MOTOR = 1.0
 K_LEFT_MOTOR = 1.0
 
-# Mensagens PWM
+# iniciando
 pub_joy_y = rospy.Publisher('/vel_linear', Int32, queue_size=10)
 pub_joy_x = rospy.Publisher('/vel_angular', Int32, queue_size=10)
 
-# Waypoints
 nav_waypoints = [
     {"lat": -31.78106117, "lon": -52.3233413},
     {"lat": -31.7810401, "lon": -52.323451},
-    {"lat": -31.7810440, "lon": -52.32344818},
-    {"lat": -31.781021118, "lon": -52.32344436}
 ]
 
 waypoint_index = 0
 num_waypoints = len(nav_waypoints)
 
-# compass and gps
 compass_angle = 0.0
 waypoint_angle = 0.0
 last_calc_dist = 0.0
 gps_lat = 0.0
 gps_lon = 0.0
 
-#moving average filter
 NUM_FILTERING_POINTS = 8
 buffer_gps_lat = [0.0] * NUM_FILTERING_POINTS
 buffer_gps_lon = [0.0] * NUM_FILTERING_POINTS
@@ -49,10 +40,9 @@ def store_gps_reading(lat, lon):
         buffer_gps_lat[i] = buffer_gps_lat[i - 1]
         buffer_gps_lon[i] = buffer_gps_lon[i - 1]
 
-    #ponteiro
     buffer_gps_lat[0] = lat
     buffer_gps_lon[0] = lon
-    
+
     if buffer_fill_index < NUM_FILTERING_POINTS:
         buffer_fill_index += 1
 
@@ -69,7 +59,6 @@ def compute_filtered_gps():
     }
     return filtered_waypoint
 
-# ROS gps
 def gps_latitude_callback(data):
     global gps_lat
     gps_lat = data.data
@@ -80,7 +69,6 @@ def gps_longitude_callback(data):
     gps_lon = data.data
     store_gps_reading(gps_lat, gps_lon)
 
-# ROS compass
 def compass_callback(data):
     global compass_angle
     compass_angle = data.data  
@@ -116,8 +104,6 @@ def compute_navigation_vector(gps_lat, gps_lon):
             next_waypoint = get_waypoint_with_index(waypoint_index)
             rospy.loginfo(f"Próxima coordenada: Latitude {next_waypoint['lat']}, Longitude {next_waypoint['lon']}")
 
-    if waypoint_index == num_waypoints:
-        rospy.signal_shutdown("All waypoints reached")  #
 
     gps_f_lon_rad = math.radians(gps_lon)
     waypoint_lon_rad = math.radians(cur_waypoint["lon"])
@@ -175,7 +161,7 @@ def initialize_joystick():
     pub_joy_y.publish(Joy_y)
     pub_joy_x.publish(Joy_x)
     rospy.sleep(5)
-
+  
 def main():
     rospy.init_node('boat_navigation', anonymous=True)
     rospy.Subscriber("compass_data", Float32, compass_callback)
@@ -185,10 +171,9 @@ def main():
     #função inicial da cadeira
     initialize_joystick()
    
-    while not rospy.is_shutdown():
-        gps_filtered = compute_filtered_gps()
-        compute_navigation_vector(gps_filtered["lat"], gps_filtered["lon"])
-        control_navigation()
+    gps_filtered = compute_filtered_gps()
+    compute_navigation_vector(gps_filtered["lat"], gps_filtered["lon"])
+    control_navigation()
 
 if __name__ == '__main__':
     try:
