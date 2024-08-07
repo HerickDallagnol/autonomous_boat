@@ -2,21 +2,22 @@
 import rospy
 import math
 from std_msgs.msg import Float32, Int32
+from std_msgs.msg import Bool
 
-TOLERANCE_RADIUS = 7.0  # Tolerance radius for reaching the goal
+TOLERANCE_RADIUS = 7.0 
 MAX_HEADING_ANGLE = 180
 MIN_HEADING_ANGLE = 10
 ANGLE_RANGE_DIV = 0.25
 K_RIGHT_MOTOR = 1.0
 K_LEFT_MOTOR = 1.0
 
-# iniciando
+#iniciando
 pub_joy_y = rospy.Publisher('/vel_linear', Int32, queue_size=10)
 pub_joy_x = rospy.Publisher('/vel_angular', Int32, queue_size=10)
 
 nav_waypoints = [
-    {"lat": -31.78106117, "lon": -52.3233413},
-    {"lat": -31.7810401, "lon": -52.323451},
+    {"lat": -31.782059, "lon": -52.323709}, 
+    {"lat": -31.782005, "lon": -52.322013},   
 ]
 
 waypoint_index = 0
@@ -73,6 +74,12 @@ def compass_callback(data):
     global compass_angle
     compass_angle = data.data  
 
+def north_callback(msg):
+    if msg.data:
+        rospy.loginfo("Norte magnético")
+    else:
+        rospy.loginfo("Nao")
+        
 def get_waypoint_with_index(index):
     return nav_waypoints[index]
 
@@ -82,7 +89,7 @@ def compute_navigation_vector(gps_lat, gps_lon):
     cur_waypoint = get_waypoint_with_index(waypoint_index)
 
     delta_lat = math.radians(cur_waypoint["lat"] - gps_lat)
-    gps_f_lat_rad = math.radians(gps_lat)
+    gps_f_lat_rad = math.radians(gps_lat)   
     waypoint_lat_rad = math.radians(cur_waypoint["lat"])
     delta_lon = math.radians(cur_waypoint["lon"] - gps_lon)
 
@@ -114,6 +121,9 @@ def compute_navigation_vector(gps_lat, gps_lon):
 
     if waypoint_angle < 0:
         waypoint_angle += 360
+
+    rospy.loginfo(f"Ângulo recebido da bússola: {compass_angle}")
+    rospy.loginfo(f"Ângulo necessário para o waypoint: {waypoint_angle}")
 
 def control_navigation():
     global heading_error
@@ -164,19 +174,25 @@ def initialize_joystick():
   
 def main():
     rospy.init_node('boat_navigation', anonymous=True)
-    rospy.Subscriber("compass_data", Float32, compass_callback)
+    #giroscopio
+    rospy.Subscriber("compass_data", Float32, compass_callback) 
+    rospy.Subscriber('north_detected', Bool, north_callback)
+
+    #gps
     rospy.Subscriber("gps_latitude", Float32, gps_latitude_callback)
     rospy.Subscriber("gps_longitude", Float32, gps_longitude_callback)
 
-    #função inicial da cadeira
+    #inicia 
     initialize_joystick()
-   
-    gps_filtered = compute_filtered_gps()
-    compute_navigation_vector(gps_filtered["lat"], gps_filtered["lon"])
-    control_navigation()
+
+    while not rospy.is_shutdown():
+        gps_filtered = compute_filtered_gps()
+        compute_navigation_vector(gps_filtered["lat"], gps_filtered["lon"])
+        control_navigation()
 
 if __name__ == '__main__':
     try:
         main()
     except rospy.ROSInterruptException:
         pass
+    
